@@ -1,0 +1,33 @@
+name: Test 'Create PR' action
+run-name: Test 'Create PR' action
+on: pull_request
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup
+        run: date > dummy.md  # プッシュ対象のダミーファイルを作成
+      - name: Exercise
+        id: exercise
+        uses: ./              # ローカルアクション呼び出し
+        with:
+          message: Test message
+      - name: Verify
+        run: |
+          set -x
+          test "$(gh pr view "${BRANCH}" --json title --jq .title)" = "Test message"
+        env:
+          BRANCH: ${{ steps.exercise.outputs.branch }}
+      - name: Teardown
+        if: ${{ always() }}
+        run: |                # シェルコマンドに || true を付け、エラーは意図的に握りつぶす
+          gh pr close "${BRANCH}" || true
+          git push origin "${BRANCH}" --delete || true
+        env:
+          BRANCH: ${{ steps.exercise.outputs.branch }}
