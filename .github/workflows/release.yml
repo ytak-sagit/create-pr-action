@@ -15,7 +15,8 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
-      - env:
+      - shell: bash
+        env:
           USERNAME: github-actions[bot]
           EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
           BUMP_LEVEL: ${{ inputs.bump-level }}
@@ -23,5 +24,6 @@ jobs:
         run: |    # バージョニングスクリプトを実行し、リリースノートを作成する
           git config --global user.name "${USERNAME}"
           git config --global user.email "${EMAIL}"
+          chmod +x .github/scripts/bump.sh
           version="$(.github/scripts/bump.sh "${BUMP_LEVEL}")"
           gh release create "${version}" --title "${version}" --generate-notes
