@@ -1,0 +1,27 @@
+name: Release 'Create PR' action
+run-name: Release 'Create PR' action
+on:
+  workflow_dispatch:
+    inputs:
+      bump-level:   # バージョニングスクリプトの引数として利用する
+        type: choice
+        options: [major, minor, patch]
+        required: true
+        description: Bump to major or minor or patch
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - env:
+          USERNAME: github-actions[bot]
+          EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+          BUMP_LEVEL: ${{ inputs.bump-level }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |    # バージョニングスクリプトを実行し、リリースノートを作成する
+          git config --global user.name "${USERNAME}"
+          git config --global user.email "${EMAIL}"
+          version="$(.github/scripts/bump.sh "${BUMP_LEVEL}")"
+          gh release create "${version}" --title "${version}" --generate-notes
